@@ -17,7 +17,7 @@ brew tap mpalarya/3fingers https://github.com/MPalarya/3Fingers
 brew install --cask 3fingers
 ```
 
-To upgrade, run `brew upgrade --cask --greedy 3fingers`. To remove it, run `brew uninstall --cask 3fingers`.
+To upgrade, run `brew upgrade` (the cask is bumped automatically on every release). To remove it, run `brew uninstall --cask 3fingers`.
 
 ### curl
 
