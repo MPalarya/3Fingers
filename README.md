@@ -14,9 +14,11 @@ Use it to open links in new tabs, close browser tabs, paste in terminals, and do
 
 ```sh
 brew tap mpalarya/3fingers https://github.com/MPalarya/3Fingers
-brew trust mpalarya/3fingers     # Homebrew 7+ requires trusting third-party taps
+brew trust mpalarya/3fingers
 brew install --cask 3fingers
 ```
+
+Homebrew 7 and later require you to trust a third-party tap before installing from it (`brew trust`).
 
 To upgrade, run `brew upgrade` (the cask is bumped automatically on every release). To remove it, run `brew uninstall --cask 3fingers`.
 
