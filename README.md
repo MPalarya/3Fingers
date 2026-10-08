@@ -14,6 +14,7 @@ Use it to open links in new tabs, close browser tabs, paste in terminals, and do
 
 ```sh
 brew tap mpalarya/3fingers https://github.com/MPalarya/3Fingers
+brew trust mpalarya/3fingers     # Homebrew 7+ requires trusting third-party taps
 brew install --cask 3fingers
 ```
 
