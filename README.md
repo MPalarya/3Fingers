@@ -10,6 +10,27 @@ Use it to open links in new tabs, close browser tabs, paste in terminals, and do
 
 ## Install
 
+### Homebrew
+
+```sh
+brew tap mpalarya/3fingers https://github.com/MPalarya/3Fingers
+brew install --cask 3fingers
+```
+
+To upgrade, run `brew upgrade --cask --greedy 3fingers`. To remove it, run `brew uninstall --cask 3fingers`.
+
+### curl
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/MPalarya/3Fingers/main/install.sh | bash
+```
+
+This downloads the latest release, installs it into `/Applications` and launches it. Run the same command again to update.
+
+Both methods skip the Gatekeeper warning described below. After installing, grant **Accessibility** access when asked (step 4).
+
+### Manual
+
 1. Download `3Fingers.dmg` from the [latest release](../../releases/latest).
 2. Open the DMG and drag **3Fingers** into **Applications**.
 3. Launch it. See the next section to get past Gatekeeper.
