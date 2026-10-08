@@ -1,6 +1,6 @@
 cask "3fingers" do
-  version "0.1.0"
-  sha256 "defdf456dbe22a5982a2ab8aaff3465af95ed78f36a7b867d5f62dd7e57cfd18"
+  version "0.1.1"
+  sha256 "b818711f699269909e569a7d7c5343b56bdfcbbc084497bc8d75653532cbced6"
 
   url "https://github.com/MPalarya/3Fingers/releases/download/v#{version}/3Fingers.dmg"
   name "3Fingers"
