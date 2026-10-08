@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3Fingers — Middle-click on your Mac trackpad</title>
+<meta name="description" content="Free, tiny Mac menu bar app: tap or click with three fingers on your trackpad to middle-click. Open links in new tabs, close tabs, and more.">
+<meta property="og:title" content="3Fingers — Middle-click on your Mac trackpad">
+<meta property="og:description" content="Tap with three fingers to middle-click. Free and open source, for Apple Silicon Macs.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mpalarya.github.io/3Fingers/">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='10' width='56' height='44' rx='10' fill='%235b5bd6'/%3E%3Ccircle cx='20' cy='32' r='5' fill='white'/%3E%3Ccircle cx='32' cy='28' r='5' fill='white'/%3E%3Ccircle cx='44' cy='32' r='5' fill='white'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #fbfbfd;
+    --surface: #ffffff;
+    --text: #1d1d1f;
+    --muted: #6e6e73;
+    --line: #e5e5ea;
+    --accent: #5b5bd6;
+    --accent-ink: #ffffff;
+    --accent-soft: #ececfd;
+    --pad: #e9e9ee;
+    --pad-edge: #d4d4dc;
+    --finger: #5b5bd6;
+    --code-bg: #f2f2f7;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f0f12;
+      --surface: #18181c;
+      --text: #f5f5f7;
+      --muted: #a1a1a6;
+      --line: #2c2c32;
+      --accent: #8b8bf5;
+      --accent-ink: #0f0f12;
+      --accent-soft: #23233a;
+      --pad: #24242a;
+      --pad-edge: #34343c;
+      --finger: #8b8bf5;
+      --code-bg: #1f1f24;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding-inline: 20px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Nav */
+  nav { display: flex; align-items: center; justify-content: space-between; padding-block: 18px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; color: var(--text); }
+  .brand:hover { text-decoration: none; }
+  .brand svg { width: 28px; height: 28px; }
+  nav .links { display: flex; gap: 22px; font-size: 15px; }
+  nav .links a { color: var(--muted); }
+  nav .links a:hover { color: var(--text); text-decoration: none; }
+
+  /* Hero */
+  .hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding-block: 56px 72px; }
+  h1 { font-size: clamp(36px, 6vw, 56px); line-height: 1.05; letter-spacing: -0.025em; margin: 0 0 18px; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .lede { font-size: 20px; color: var(--muted); margin: 0 0 30px; max-width: 30em; }
+  .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--accent); color: var(--accent-ink);
+    font-weight: 600; font-size: 17px; padding: 14px 24px; border-radius: 980px;
+    box-shadow: var(--shadow); transition: transform .15s ease, filter .15s ease;
+  }
+  .btn:hover { text-decoration: none; filter: brightness(1.06); transform: translateY(-1px); }
+  .btn svg { width: 18px; height: 18px; }
+  .meta { font-size: 14px; color: var(--muted); }
+  .meta a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+
+  /* Trackpad demo */
+  .demo { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .pad {
+    position: relative; width: 100%; max-width: 420px; aspect-ratio: 1.45;
+    background: var(--pad); border: 1px solid var(--pad-edge); border-radius: 28px;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,.06), var(--shadow);
+  }
+  .finger {
+    position: absolute; width: 11%; aspect-ratio: 1; border-radius: 50%;
+    background: var(--finger); opacity: .14; transform: translate(-50%, -50%) scale(1.15);
+    animation: tap 2.8s infinite;
+  }
+  .finger:nth-child(1) { left: 35%; top: 55%; }
+  .finger:nth-child(2) { left: 50%; top: 45%; animation-delay: .03s; }
+  .finger:nth-child(3) { left: 65%; top: 55%; animation-delay: .06s; }
+  .ripple {
+    position: absolute; left: 50%; top: 50%; width: 46%; aspect-ratio: 1; border-radius: 50%;
+    border: 3px solid var(--finger); transform: translate(-50%, -50%) scale(.6); opacity: 0;
+    animation: ripple 2.8s infinite;
+  }
+  @keyframes tap {
+    0%, 30% { opacity: .14; transform: translate(-50%, -50%) scale(1.15); }
+    36%     { opacity: .9; transform: translate(-50%, -50%) scale(1); }
+    44%     { opacity: .9; transform: translate(-50%, -50%) scale(1); }
+    52%, 100% { opacity: .14; transform: translate(-50%, -50%) scale(1.15); }
+  }
+  @keyframes ripple {
+    0%, 42% { opacity: 0; transform: translate(-50%, -50%) scale(.6); }
+    46%     { opacity: .55; }
+    70%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+  }
+  .result {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px 16px; font-size: 15px; box-shadow: var(--shadow);
+  }
+  .result .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); animation: blink 2.8s infinite; }
+  @keyframes blink { 0%, 44% { opacity: .2; } 48%, 75% { opacity: 1; } 100% { opacity: .2; } }
+
+  /* Sections */
+  section { padding-block: 64px; border-top: 1px solid var(--line); }
+  h2 { font-size: clamp(28px, 4vw, 38px); letter-spacing: -0.02em; line-height: 1.15; margin: 0 0 12px; }
+  .sub { color: var(--muted); font-size: 18px; margin: 0 0 36px; max-width: 36em; }
+
+  .uses { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px; }
+  .card h3 { margin: 12px 0 6px; font-size: 18px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15.5px; }
+  .icon {
+    width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent);
+  }
+  .icon svg { width: 22px; height: 22px; }
+
+  ol.steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; counter-reset: step; }
+  ol.steps li {
+    counter-increment: step; position: relative;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+    padding: 22px 24px 22px 76px;
+  }
+  ol.steps li::before {
+    content: counter(step); position: absolute; left: 22px; top: 20px;
+    width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--accent); color: var(--accent-ink); font-weight: 700;
+  }
+  ol.steps h3 { margin: 4px 0 6px; font-size: 18px; }
+  ol.steps p { margin: 0; color: var(--muted); font-size: 15.5px; }
+  ol.steps p + p { margin-top: 8px; }
+  kbd, .ui {
+    font: inherit; font-size: .92em; color: var(--text);
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; white-space: nowrap;
+  }
+  .note {
+    margin-top: 10px; padding: 12px 14px; border-radius: 12px; font-size: 14.5px;
+    background: var(--accent-soft); color: var(--text);
+  }
+
+  details {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 0 20px; margin-bottom: 12px;
+  }
+  summary {
+    cursor: pointer; list-style: none; padding: 18px 0; font-weight: 600; font-size: 17px;
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; font-weight: 400; font-size: 24px; color: var(--muted); transition: transform .2s; }
+  details[open] summary::after { transform: rotate(45deg); }
+  details > div { padding-bottom: 18px; color: var(--muted); font-size: 15.5px; }
+  details > div p { margin: 0 0 10px; }
+
+  .code {
+    position: relative; background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 16px; margin: 8px 0 16px; overflow-x: auto;
+    font: 14px/1.6 ui-monospace, "SF Mono", Menlo, monospace; color: var(--text); white-space: pre;
+  }
+  .copy {
+    position: absolute; top: 8px; right: 8px; font: 600 12px/1 -apple-system, sans-serif;
+    background: var(--surface); color: var(--muted); border: 1px solid var(--line); border-radius: 8px;
+    padding: 6px 10px; cursor: pointer;
+  }
+  .copy:hover { color: var(--text); }
+
+  .req { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+  .pill { font-size: 14px; color: var(--muted); border: 1px solid var(--line); border-radius: 980px; padding: 6px 14px; background: var(--surface); }
+
+  footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+  footer a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+
+  @media (max-width: 760px) {
+    .hero { grid-template-columns: 1fr; gap: 40px; padding-block: 28px 56px; }
+    .demo { order: -1; }
+    .pad { max-width: 320px; }
+    nav .links a:not(.gh) { display: none; }
+    ol.steps li { padding: 70px 20px 20px; }
+    ol.steps li::before { top: 20px; left: 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .finger, .ripple, .result .dot { animation: none; }
+    .finger { opacity: .9; transform: translate(-50%, -50%); }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <nav>
+    <a class="brand" href="#">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="4" y="10" width="56" height="44" rx="10" fill="#5b5bd6"/><circle cx="20" cy="32" r="5" fill="#fff"/><circle cx="32" cy="28" r="5" fill="#fff"/><circle cx="44" cy="32" r="5" fill="#fff"/></svg>
+      3Fingers
+    </a>
+    <div class="links">
+      <a href="#install">Install</a>
+      <a href="#faq">FAQ</a>
+      <a class="gh" href="https://github.com/MPalarya/3Fingers">GitHub</a>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <h1>The middle click your trackpad is <em>missing</em>.</h1>
+      <p class="lede">Tap with three fingers to middle-click. Open links in new tabs, close tabs in one tap, and paste in Terminal, all without a mouse.</p>
+      <div class="cta">
+        <a class="btn" href="https://github.com/MPalarya/3Fingers/releases/latest/download/3Fingers.dmg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
+          Download for Mac
+        </a>
+        <span class="meta"><span id="version">Free</span> · Apple Silicon · macOS 14+</span>
+      </div>
+    </div>
+    <div class="demo" aria-hidden="true">
+      <div class="pad">
+        <span class="finger"></span><span class="finger"></span><span class="finger"></span>
+        <span class="ripple"></span>
+      </div>
+      <div class="result"><span class="dot"></span> Middle click</div>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <h2>Small app, big shortcut.</h2>
+      <p class="sub">3Fingers lives quietly in your menu bar. It has no windows, no settings to fiddle with and no account to create.</p>
+      <div class="uses">
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M12 12v4m-2-2h4"/></svg></div>
+          <h3>Open in a new tab</h3>
+          <p>Three-finger tap any link to open it in the background, just like a mouse wheel click.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 10 4 4m0-4-4 4"/></svg></div>
+          <h3>Close tabs fast</h3>
+          <p>Tap a browser tab with three fingers to close it instantly.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 4 4-4 4M12 16h7"/></svg></div>
+          <h3>Paste &amp; more</h3>
+          <p>Works anywhere a middle mouse button does: terminals, code editors, 3D and design apps.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+          <h3>Swipes still work</h3>
+          <p>Only quick, still taps count. Three-finger swipes and Mission Control behave exactly as before.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <h2>Install in about a minute.</h2>
+      <p class="sub">3Fingers is free and not sold through the App Store, so macOS asks you to confirm a couple of things the first time.</p>
+      <ol class="steps">
+        <li>
+          <h3>Download and drag to Applications</h3>
+          <p><a href="https://github.com/MPalarya/3Fingers/releases/latest/download/3Fingers.dmg">Download 3Fingers.dmg</a>, open it, and drag the <b>3Fingers</b> icon onto the <b>Applications</b> folder.</p>
+        </li>
+        <li>
+          <h3>Open it for the first time</h3>
+          <p>Open 3Fingers from your Applications folder. macOS will warn you that it can't verify the developer. This is normal for free apps distributed outside the App Store.</p>
+          <p><b>macOS 15 Sequoia and newer:</b> click <span class="ui">Done</span>, then open <span class="ui">System Settings → Privacy &amp; Security</span>, scroll down and click <span class="ui">Open Anyway</span>.</p>
+          <p><b>macOS 14 Sonoma:</b> right-click (or Control-click) 3Fingers in Applications, choose <span class="ui">Open</span>, then click <span class="ui">Open</span> again.</p>
+        </li>
+        <li>
+          <h3>Allow Accessibility access</h3>
+          <p>macOS will ask to let 3Fingers control your computer. Click <span class="ui">Open System Settings</span> and switch on <b>3Fingers</b> under <span class="ui">Accessibility</span>.</p>
+          <div class="note">This is the permission every mouse and trackpad utility needs to send clicks. 3Fingers doesn't read what you type or what's on your screen.</div>
+        </li>
+        <li>
+          <h3>Tap with three fingers</h3>
+          <p>Look for the <b>hand icon</b> in your menu bar near the clock. Tap a link with three fingers and it opens in a new tab. Click the icon to turn 3Fingers off or start it at login.</p>
+        </li>
+      </ol>
+
+      <div class="req">
+        <span class="pill">Apple Silicon Mac (M1 or newer)</span>
+        <span class="pill">macOS 14 Sonoma or newer</span>
+        <span class="pill">Built-in trackpad or Magic Trackpad</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <h2>Questions</h2>
+      <p class="sub">The short answers.</p>
+
+      <details>
+        <summary>Is it really free?</summary>
+        <div><p>Yes. 3Fingers is free and open source under the MIT license. There are no ads, accounts or in-app purchases.</p></div>
+      </details>
+      <details>
+        <summary>Is it safe?</summary>
+        <div>
+          <p>The full source code is public on <a href="https://github.com/MPalarya/3Fingers">GitHub</a>, and every download is built automatically from that code. The app never connects to the internet and collects no data.</p>
+          <p>macOS shows a warning only because the app isn't registered with Apple's paid developer program.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Three-finger tap already does something on my Mac.</summary>
+        <div><p>If three-finger tap is set to look up words, change it so both actions don't fire at once. Go to <span class="ui">System Settings → Trackpad → Point &amp; Click</span>, and under <span class="ui">Look up &amp; data detectors</span> choose <span class="ui">Force Click with One Finger</span>.</p></div>
+      </details>
+      <details>
+        <summary>Does it work with an Intel Mac or an older macOS?</summary>
+        <div><p>No. 3Fingers is built for Apple Silicon Macs (M1, M2, M3, M4 and newer) running macOS 14 Sonoma or later.</p></div>
+      </details>
+      <details>
+        <summary>It stopped working after an update.</summary>
+        <div><p>Open <span class="ui">System Settings → Privacy &amp; Security → Accessibility</span>, remove 3Fingers with the <span class="ui">–</span> button, then open the app again and turn it back on when asked.</p></div>
+      </details>
+      <details>
+        <summary>How do I uninstall it?</summary>
+        <div><p>Click the hand icon in the menu bar, choose <span class="ui">Quit 3Fingers</span>, then drag 3Fingers from Applications to the Trash.</p></div>
+      </details>
+      <details>
+        <summary>I'm a developer. Can I install it from Terminal?</summary>
+        <div>
+          <p>With Homebrew:</p>
+          <div class="code"><button class="copy" type="button">Copy</button>brew tap mpalarya/3fingers https://github.com/MPalarya/3Fingers
+brew trust mpalarya/3fingers
+brew install --cask 3fingers</div>
+          <p>Or with curl:</p>
+          <div class="code"><button class="copy" type="button">Copy</button>curl -fsSL https://raw.githubusercontent.com/MPalarya/3Fingers/main/install.sh | bash</div>
+          <p>Both methods skip the "unverified developer" warning. See the <a href="https://github.com/MPalarya/3Fingers#readme">README</a> for details and build instructions.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>3Fingers is free and open source (MIT).</span>
+    <span><a href="https://github.com/MPalarya/3Fingers">Source code</a> · <a href="https://github.com/MPalarya/3Fingers/releases">All releases</a> · <a href="https://github.com/MPalarya/3Fingers/issues">Report a problem</a></span>
+  </div>
+</footer>
+
+<script>
+  // Show the latest version next to the download button.
+  fetch("https://api.github.com/repos/MPalarya/3Fingers/releases/latest")
+    .then(r => r.ok ? r.json() : null)
+    .then(r => { if (r && r.tag_name) document.getElementById("version").textContent = "Free · " + r.tag_name; })
+    .catch(() => {});
+
+  document.querySelectorAll(".copy").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const text = btn.parentElement.textContent.replace(btn.textContent, "").trim();
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = "Copied";
+        setTimeout(() => (btn.textContent = "Copy"), 1500);
+      });
+    });
+  });
+</script>
+</body>
+</html>

@@ -2,6 +2,8 @@
 
 A tiny open-source menu bar daemon for Apple Silicon Macs that turns a **3-finger tap** or **3-finger click** on the trackpad into a **middle click** (mouse button 3, `CGEvent` button 2) at the cursor.
 
+**Website:** https://mpalarya.github.io/3Fingers/
+
 Use it to open links in new tabs, close browser tabs, paste in terminals, and do anything else that needs a middle mouse button.
 
 - Apple Silicon (`arm64`) only, macOS 14 Sonoma or later
